@@ -9,7 +9,7 @@ import {
 } from "../index";
 
 import { TWO, ZERO, ONE_DAY_IN_SECONDS } from "../constants";
-import { PerpV2, PerpV2BasisTradingModule, PerpV2LeverageModule, PerpV2LeverageModuleV2, SetToken } from "../contracts";
+import { PerpV2BasisTradingModule, PerpV2LeverageModule, PerpV2LeverageModuleV2, SetToken } from "../contracts";
 import { PerpV2Fixture } from "../fixtures";
 
 
