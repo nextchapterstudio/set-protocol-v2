@@ -21,7 +21,7 @@ export function toUSDCDecimals(quantity: BigNumber): BigNumber {
 // Allocates all deposited collateral to a levered position. Returns new baseToken position unit
 export async function leverUp(
   setToken: SetToken,
-  module: PerpV2LeverageModuleV2,
+  module: PerpV2LeverageModuleV2 | PerpV2BasisTradingModule,
   fixture: PerpV2Fixture,
   owner: Account,
   baseToken: Address,
@@ -179,7 +179,6 @@ export async function calculateUSDCTransferOutPreciseUnits(
 
 export async function calculateExternalPositionUnit(
   setToken: SetToken,
-  module: PerpV2LeverageModuleV2,
   fixture: PerpV2Fixture,
 ): Promise<BigNumber> {
   const totalPositionValue = await fixture.clearingHouse.getAccountValue(setToken.address);
