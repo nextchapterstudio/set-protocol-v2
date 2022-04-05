@@ -42,20 +42,13 @@ const config: HardhatUserConfig = {
       gas: 12000000,
       blockGasLimit: 12000000
     },
-    kovan: {
-      url: "https://kovan.infura.io/v3/" + process.env.INFURA_TOKEN,
-      // @ts-ignore
-      accounts: [`0x${process.env.KOVAN_DEPLOY_PRIVATE_KEY}`],
+    mumbai: {
+      url: "https://rpc-mumbai.maticvigil.com",
+      accounts: [`0x${process.env.MUMBAI_DEPLOY_PRIVATE_KEY}`]
     },
-    staging_mainnet: {
-      url: "https://mainnet.infura.io/v3/" + process.env.INFURA_TOKEN,
-      // @ts-ignore
-      accounts: [`0x${process.env.STAGING_MAINNET_DEPLOY_PRIVATE_KEY}`],
-    },
-    production: {
-      url: "https://mainnet.infura.io/v3/" + process.env.INFURA_TOKEN,
-      // @ts-ignore
-      accounts: [`0x${process.env.PRODUCTION_MAINNET_DEPLOY_PRIVATE_KEY}`],
+    matic: {
+      url: "https://polygon-rpc.com",
+      accounts: [`0x${process.env.MATIC_DEPLOY_PRIVATE_KEY}`]
     },
     // To update coverage network configuration got o .solcover.js and update param in providerOptions field
     coverage: {
@@ -63,6 +56,10 @@ const config: HardhatUserConfig = {
       timeout: 200000,
     },
   },
+  // @ts-ignore
+  etherscan: {
+    apiKey: `${process.env.POLYGONSCAN_API_KEY}`
+   },
   // @ts-ignore
   typechain: {
     outDir: "typechain",
