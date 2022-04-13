@@ -29,6 +29,7 @@ import {
 } from "../constants";
 
 import { SetToken__factory } from "../../typechain/factories/SetToken__factory";
+import { ExchangeIssuanceZeroEx } from "@typechain/ExchangeIssuanceZeroEx";
 
 export class SystemFixture {
   private _provider: providers.Web3Provider | providers.JsonRpcProvider;
@@ -47,6 +48,7 @@ export class SystemFixture {
   public issuanceModule: BasicIssuanceModule;
   public streamingFeeModule: StreamingFeeModule;
   public navIssuanceModule: CustomOracleNavIssuanceModule;
+  public exchangeIssuanceZeroEx: ExchangeIssuanceZeroEx;
 
   public weth: WETH9;
   public usdc: StandardTokenMock;
@@ -96,10 +98,18 @@ export class SystemFixture {
       ]
     );
 
-    this.integrationRegistry = await this._deployer.core.deployIntegrationRegistry(this.controller.address);
+    // duplicate
+    // this.integrationRegistry = await this._deployer.core.deployIntegrationRegistry(this.controller.address);
     this.setValuer = await this._deployer.core.deploySetValuer(this.controller.address);
     this.streamingFeeModule = await this._deployer.modules.deployStreamingFeeModule(this.controller.address);
     this.navIssuanceModule = await this._deployer.modules.deployCustomOracleNavIssuanceModule(this.controller.address, this.weth.address);
+
+    this.exchangeIssuanceZeroEx = await this._deployer.external.deployZeroExIssuer(
+      this.weth.address,
+      this.controller.address,
+      // 0xdef1c0ded9bec7f1a1670819833240f027b25eff is the polygon mainnet '0x: ExchangeProxy' deployment
+      "0xDef1C0ded9bec7F1a1670819833240f027b25EfF",
+    );
 
     await this.controller.initialize(
       [this.factory.address], // Factories

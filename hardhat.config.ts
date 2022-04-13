@@ -33,7 +33,11 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: false,
-      forking: (process.env.FORK) ? forkingConfig : undefined,
+      forking: {
+        // splash-demo proj alchemy
+        url: "https://polygon-mainnet.g.alchemy.com/v2/sWHzZhhmrvFms_X0QWqgnRJN9z-kh4La",
+        blockNumber: 27080817,
+      },
       accounts: getHardhatPrivateKeys(),
     },
     localhost: {
