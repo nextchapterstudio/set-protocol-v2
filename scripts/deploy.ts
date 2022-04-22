@@ -1,10 +1,11 @@
 import { ethers } from 'hardhat';
-import { getSystemFixture } from "../utils/test/index";
+import { Address } from '../utils/types';
+import { getSplashFixture } from '../utils/test/index';
 
 // npx hardhat run --network localhost scripts/deploy.ts
 async function deploy() {
     let owner = (await ethers.getSigners())[0];
-    let fixture = await getSystemFixture(owner.address);
+    let fixture = await getSplashFixture(owner.address);
     await fixture.initialize();
 }
 
