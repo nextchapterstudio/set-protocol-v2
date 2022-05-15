@@ -1,5 +1,4 @@
 import { ethers } from 'hardhat';
-import { Address } from '../utils/types';
 import { getSplashFixture } from '../utils/test/index';
 
 // npx hardhat run --network localhost scripts/deploy.ts

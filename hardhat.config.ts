@@ -34,9 +34,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       allowUnlimitedContractSize: false,
       forking: {
-        // splash-demo proj alchemy
-        url: "https://polygon-mainnet.g.alchemy.com/v2/sWHzZhhmrvFms_X0QWqgnRJN9z-kh4La",
-        blockNumber: 27080817,
+        url: `${process.env.POLYGON_FORK_URL}`,
       },
       accounts: getHardhatPrivateKeys(),
     },
