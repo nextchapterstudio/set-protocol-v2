@@ -33,7 +33,9 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: false,
-      forking: (process.env.FORK) ? forkingConfig : undefined,
+      forking: {
+        url: `${process.env.POLYGON_FORK_URL}`,
+      },
       accounts: getHardhatPrivateKeys(),
     },
     localhost: {

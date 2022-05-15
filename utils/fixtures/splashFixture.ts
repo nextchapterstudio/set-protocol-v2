@@ -6,20 +6,17 @@ import {
   BasicIssuanceModule,
   Controller,
   IntegrationRegistry,
-  OracleMock,
   PriceOracle,
   SetToken,
   SetTokenCreator,
   SetValuer,
-  StandardTokenMock,
   StreamingFeeModule,
-  WETH9,
   CustomOracleNavIssuanceModule,
-  ProtocolViewer
+  ProtocolViewer,
+  TradeModule
 } from "../contracts";
 import DeployHelper from "../deploys";
 import {
-  ether,
   ProtocolUtils,
 } from "../common";
 import {
@@ -32,7 +29,23 @@ import {
 import { SetToken__factory } from "../../typechain/factories/SetToken__factory";
 import { ExchangeIssuanceZeroEx } from "@typechain/ExchangeIssuanceZeroEx";
 
-export class SystemFixture {
+// Deployed ERC20 tokens on polygon mainnet
+export const TokensPolygon = {
+  usdc: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
+  weth: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+  dai: "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063",
+  wbtc: "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
+};
+
+// Deployed SetTokenV2 ChainlinkOracleV2Adapter on polygon mainnet
+export const OracleWrappersPolygon = {
+  usdc_usdc: "0x6169c62e1aaE2D56a2Dc184514e8b515Ff6F1d9e",
+  weth_usdc: "0x0766894369D568da332619A4368f16eF52D4C47B",
+  dai_usdc: "0xf04ff1487BB27fA6A83F6276a55aE17Eb8B3C581",
+  wbtc_usdc: "0x9Cfe76A718Ea75E3e8cE4FC7ad0fEf84be70919b",
+};
+
+export class SplashFixture {
   private _provider: providers.Web3Provider | providers.JsonRpcProvider;
   private _ownerAddress: Address;
   private _ownerSigner: Signer;
@@ -51,21 +64,7 @@ export class SystemFixture {
   public navIssuanceModule: CustomOracleNavIssuanceModule;
   public exchangeIssuanceZeroEx: ExchangeIssuanceZeroEx;
   public protocolViewer: ProtocolViewer;
-
-  public weth: WETH9;
-  public usdc: StandardTokenMock;
-  public wbtc: StandardTokenMock;
-  public dai: StandardTokenMock;
-
-  public ETH_USD_Oracle: OracleMock;
-  public USD_USD_Oracle: OracleMock;
-  public BTC_USD_Oracle: OracleMock;
-  public DAI_USD_Oracle: OracleMock;
-
-  public component1Price: BigNumber;
-  public component2Price: BigNumber;
-  public component3Price: BigNumber;
-  public component4Price: BigNumber;
+  public tradeModule: TradeModule;
 
   constructor(provider: providers.Web3Provider | providers.JsonRpcProvider, ownerAddress: Address) {
     this._provider = provider;
@@ -80,23 +79,17 @@ export class SystemFixture {
 
     this.controller = await this._deployer.core.deployController(this.feeRecipient);
     this.issuanceModule = await this._deployer.modules.deployBasicIssuanceModule(this.controller.address);
-
-    await this.initializeStandardComponents();
-
     this.integrationRegistry = await this._deployer.core.deployIntegrationRegistry(this.controller.address);
-
     this.factory = await this._deployer.core.deploySetTokenCreator(this.controller.address);
+
     this.priceOracle = await this._deployer.core.deployPriceOracle(
       this.controller.address,
-      this.usdc.address,
+      TokensPolygon.usdc,
       [],
-      [this.weth.address, this.usdc.address, this.wbtc.address, this.dai.address],
-      [this.usdc.address, this.usdc.address, this.usdc.address, this.usdc.address],
+      [TokensPolygon.usdc, TokensPolygon.weth, TokensPolygon.dai, TokensPolygon.wbtc],
+      [TokensPolygon.usdc, TokensPolygon.usdc, TokensPolygon.usdc, TokensPolygon.usdc],
       [
-        this.ETH_USD_Oracle.address,
-        this.USD_USD_Oracle.address,
-        this.BTC_USD_Oracle.address,
-        this.DAI_USD_Oracle.address,
+        OracleWrappersPolygon.usdc_usdc, OracleWrappersPolygon.weth_usdc, OracleWrappersPolygon.dai_usdc, OracleWrappersPolygon.wbtc_usdc
       ]
     );
 
@@ -104,11 +97,12 @@ export class SystemFixture {
     // this.integrationRegistry = await this._deployer.core.deployIntegrationRegistry(this.controller.address);
     this.setValuer = await this._deployer.core.deploySetValuer(this.controller.address);
     this.streamingFeeModule = await this._deployer.modules.deployStreamingFeeModule(this.controller.address);
-    this.navIssuanceModule = await this._deployer.modules.deployCustomOracleNavIssuanceModule(this.controller.address, this.weth.address);
+    this.navIssuanceModule = await this._deployer.modules.deployCustomOracleNavIssuanceModule(this.controller.address, TokensPolygon.weth);
     this.protocolViewer = await this._deployer.viewers.deployProtocolViewer();
+    this.tradeModule = await this._deployer.modules.deployTradeModule(this.controller.address);
 
     this.exchangeIssuanceZeroEx = await this._deployer.external.deployZeroExIssuer(
-      this.weth.address,
+      TokensPolygon.weth,
       this.controller.address,
       // 0xdef1c0ded9bec7f1a1670819833240f027b25eff is the polygon mainnet '0x: ExchangeProxy' deployment
       "0xDef1C0ded9bec7F1a1670819833240f027b25EfF",
@@ -116,33 +110,15 @@ export class SystemFixture {
 
     await this.controller.initialize(
       [this.factory.address], // Factories
-      [this.issuanceModule.address, this.streamingFeeModule.address, this.navIssuanceModule.address], // Modules
+      [this.issuanceModule.address, this.streamingFeeModule.address, this.navIssuanceModule.address, this.tradeModule.address], // Modules
       [this.integrationRegistry.address, this.priceOracle.address, this.setValuer.address], // Resources
       [0, 1, 2]  // Resource IDs where IntegrationRegistry is 0, PriceOracle is 1, SetValuer is 2
     );
-  }
 
-  public async initializeStandardComponents(): Promise<void> {
-    this.weth = await this._deployer.external.deployWETH();
-    this.usdc = await this._deployer.mocks.deployTokenMock(this._ownerAddress, ether(10000), 6);
-    this.wbtc = await this._deployer.mocks.deployTokenMock(this._ownerAddress, ether(10000), 8);
-    this.dai = await this._deployer.mocks.deployTokenMock(this._ownerAddress, ether(1000000), 18);
-
-    this.component1Price = ether(230);
-    this.component2Price = ether(1);
-    this.component3Price = ether(9000);
-    this.component4Price = ether(1);
-
-    this.ETH_USD_Oracle = await this._deployer.mocks.deployOracleMock(this.component1Price);
-    this.USD_USD_Oracle = await this._deployer.mocks.deployOracleMock(this.component2Price);
-    this.BTC_USD_Oracle = await this._deployer.mocks.deployOracleMock(this.component3Price);
-    this.DAI_USD_Oracle = await this._deployer.mocks.deployOracleMock(this.component4Price);
-
-    await this.weth.deposit({ value: ether(5000) });
-    await this.weth.approve(this.issuanceModule.address, ether(10000));
-    await this.usdc.approve(this.issuanceModule.address, ether(10000));
-    await this.wbtc.approve(this.issuanceModule.address, ether(10000));
-    await this.dai.approve(this.issuanceModule.address, ether(10000));
+    // deploy ZeroExApiAdapter + initialize with trade module.
+    // 0xdef1c0ded9bec7f1a1670819833240f027b25eff is the 0x router for polygon
+    const zeroExApiAdapter = await this._deployer.adapters.deployZeroExApiAdapter("0xdef1c0ded9bec7f1a1670819833240f027b25eff", TokensPolygon.weth);
+    await this.integrationRegistry.addIntegration(this.tradeModule.address, "ZeroExApiAdapterV4", zeroExApiAdapter.address);
   }
 
   public async createSetToken(

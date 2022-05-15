@@ -12,13 +12,15 @@ import {
   UniswapFixture,
   YearnFixture,
   UniswapV3Fixture,
-  PerpV2Fixture
+  PerpV2Fixture,
+  SplashFixture,
 } from "../fixtures";
 import { Blockchain, ProtocolUtils } from "../common";
 
 // Hardhat-Provider Aware Exports
 const provider = ethers.provider;
 export const getSystemFixture = (ownerAddress: Address) => new SystemFixture(provider, ownerAddress);
+export const getSplashFixture = (ownerAddress: Address) => new SplashFixture(provider, ownerAddress);
 export const getProtocolUtils = () => new ProtocolUtils(provider);
 export const getBlockchainUtils = () => new Blockchain(provider);
 export const getAaveV2Fixture = (ownerAdderss: Address) => new AaveV2Fixture(provider, ownerAdderss);
